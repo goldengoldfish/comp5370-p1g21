@@ -8,16 +8,16 @@
 extern "C" {
 #endif
 
-typedef void* Drive;
+typedef struct Drive Drive;
 
 // Constructors/destructors
-Drive Drive_new(const char *devicePath);
-void Drive_free(Drive self);
+Drive *Drive_new(const char *devicePath);
+void Drive_free(Drive *self);
 
 // Get partitions
-Partition Drive_getPartition(Drive self, size_t index);
+Partition *Drive_getPartition(Drive *self, size_t index);
 
-size_t Drive_getPartitionCount(Drive self);
+size_t Drive_getPartitionCount(Drive *self);
 
 #ifdef __cplusplus
 }

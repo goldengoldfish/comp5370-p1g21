@@ -15,29 +15,29 @@ typedef enum {
     FN_DIRECTORY = 3
 } FileNodeType;
 
-typedef void* FileNode;
+typedef struct FileNode FileNode;
 
 // Constructors/destructors
-FileNode FileNode_new_root(const char *name);
-FileNode FileNode_new_file(const char *name, size_t offset, size_t length);
-FileNode FileNode_new_directory(const char *name, FileNode *children, size_t numChildren);
+FileNode *FileNode_new_root(const char *name);
+FileNode *FileNode_new_file(const char *name, size_t offset, size_t length);
+FileNode *FileNode_new_directory(const char *name, FileNode **children, size_t numChildren);
 // Use `deep` to free subtree as well
 // This will zero each child's reference to self node as well (i.e., getParent() will return NULL)
-void FileNode_free(bool deep); 
+void FileNode_free(FileNode *self, bool deep); 
 
 // Basic getters
-FileNodeType FileNode_getType(FileNode self);
-const char* FileNode_getName(FileNode self);
+FileNodeType FileNode_getType(FileNode *self);
+const char* FileNode_getName(FileNode *self);
 
 // Traverse directories
-FileNode FileNode_getChild(FileNode self, int index);
-size_t FileNode_getChildCount(FileNode self);
-FileNode FileNode_getParent(FileNode self);
+FileNode *FileNode_getChild(FileNode *self, int index);
+size_t FileNode_getChildCount(FileNode *self);
+FileNode *FileNode_getParent(FileNode *self);
 
 // Read files
-size_t FileNode_getOffset(FileNode self); // Relative to the file's partition
-size_t FileNode_getLength(FileNode self);
-Stream FileNode_open(FileNode self);
+size_t FileNode_getOffset(FileNode *self); // Relative to the file's partition
+size_t FileNode_getLength(FileNode *self);
+Stream *FileNode_open(FileNode *self);
 
 #ifdef __cplusplus
 }
