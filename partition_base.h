@@ -17,7 +17,7 @@ typedef struct {
 typedef struct Partition {
   void* partition;
   PartitionKind kind;
-  PartitionImpl *impl;
+  const PartitionImpl *impl;
 } Partition;
 
 #ifdef __cplusplus
