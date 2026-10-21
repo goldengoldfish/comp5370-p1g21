@@ -6,7 +6,7 @@ PartitionKind Partition_getKind(Partition *self) {
 }
 
 void Partition_free(Partition *self) {
-  assert(self && "cannot free null object");
+  assert(self && "cannot free a null stream");
 
   self->impl->free(self->partition);
   free(self);
