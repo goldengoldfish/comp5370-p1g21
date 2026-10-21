@@ -1,14 +1,26 @@
 #ifndef DRIVE_H
 #define DRIVE_H
 
-typedef struct void* Drive;
+#include <stdlib.h>
+#include "partition.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef void* Drive;
 
 // Constructors/destructors
 Drive Drive_new(const char *devicePath);
-void Drive_free(Drive this);
+void Drive_free(Drive self);
 
 // Get partitions
-Partition Drive_getPartition(Drive this, size_t index);
-size_t Drive_getPartitionCount(Drive this);
+Partition Drive_getPartition(Drive self, size_t index);
+
+size_t Drive_getPartitionCount(Drive self);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // DRIVE_H
