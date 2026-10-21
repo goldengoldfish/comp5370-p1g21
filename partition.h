@@ -19,6 +19,7 @@ typedef struct Partition Partition;
 // Basic getters
 PartitionKind Partition_getKind(Partition *self);
 
+
 // Get position (on the drive)
 size_t Partition_getOffset(Partition *self);
 size_t Partition_getLength(Partition *self);
