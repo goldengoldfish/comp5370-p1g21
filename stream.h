@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-typedef void* Stream;
+typedef struct Stream Stream;
 
 // Constructors/destructors
 Stream *Stream_new_fromFile(const char *path, size_t offset);
