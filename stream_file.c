@@ -38,7 +38,7 @@ static void FileStream_seek(void *stream, size_t offset) {
   FileStream *self = stream;
   assert(self && "Cannot seek a null file stream");
 
-  assert(fseek(self->handle, offset, SEEK_SET) && "Failed to seek file stream");
+  assert(!fseek(self->handle, offset, SEEK_SET) && "Failed to seek file stream");
   self->offset = offset;
 }
 

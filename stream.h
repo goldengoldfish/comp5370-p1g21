@@ -14,6 +14,7 @@ typedef struct Stream Stream;
 Stream *Stream_new_fromFile(const char *path);
 Stream *Stream_new_fromStream(Stream *parent, size_t offset, size_t length);
 Stream *Stream_new_fromMemory(unsigned char *data, size_t length, bool ownsData);
+Stream *Stream_new_fromMultiple(Stream **others, size_t *lengths, size_t numOthers, bool ownsOthers);
 void Stream_free(Stream *self);
 
 // Read data
