@@ -1,7 +1,7 @@
-
 #include <stdbool.h>
 #include <stdint.h>
 #include "mbr.h"
+#include "partition.h"
 #include "stream.h"
 #include "assert.h"
 /* Read a little-endian 32-bit value from four bytes. */
@@ -17,7 +17,6 @@ int read_mbr(Stream *image, MBRInfo *mbr) {
     assert(mbr && "mbr cannot be NULL");
 
     unsigned char buffer[MBR_SIZE];
-    Stream *reader = Stream_new_fromMemory(buffer, MBR_SIZE, 0);
 
     // covered by asserts at beginning
     // if (image == NULL || mbr == NULL) {
@@ -31,9 +30,9 @@ int read_mbr(Stream *image, MBRInfo *mbr) {
     // }
 
     /* An MBR requires at least 512 bytes. */
-    if (Stream_read(reader, buffer, 1, MBR_SIZE) != MBR_SIZE) {
+    if (Stream_read(image, buffer, 0, MBR_SIZE) != MBR_SIZE) {
         assert(0 && "Cannot read MBR");
-		return 3;
+		    return 3;
     }
 
     /* Check the MBR signature at offsets 510 and 511. */
@@ -50,6 +49,19 @@ int read_mbr(Stream *image, MBRInfo *mbr) {
         mbr->partitions[i].partition_type = entry[4];
         mbr->partitions[i].start_sector = read_le32(&entry[8]);
         mbr->partitions[i].sector_count = read_le32(&entry[12]);
+        size_t start = 512 * mbr->partitions[i].start_sector;
+        size_t length = 512 * mbr->partitions[i].sector_count;
+
+        switch (mbr->partitions[i].partition_type) {
+            // FAT 16
+            case 6:
+                Stream_seek(image, start);
+                mbr->partitions[i].partition = Partition_new_fat16(image, start, length);
+                break;
+            default:
+                mbr->partitions[i].partition = NULL;
+                return 5;
+        }
     }
 
     return 0;
