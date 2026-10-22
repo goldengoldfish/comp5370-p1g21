@@ -38,8 +38,9 @@ int read_mbr(Stream *image, MBRInfo *mbr) {
     /* An MBR requires at least 512 bytes. */
     if (Stream_read(reader, buffer, 1, MBR_SIZE) != MBR_SIZE) {
         assert(0 && "Cannot read MBR");
-		return 3;
+        return 3;
     }
+    Stream_free(reader);
 
     /* Check the MBR signature at offsets 510 and 511. */
     if (buffer[510] != 0x55 || buffer[511] != 0xAA) {
