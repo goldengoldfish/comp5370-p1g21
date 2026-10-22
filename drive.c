@@ -3,28 +3,28 @@
 #include <stdio.h>
 #include "drive.h"
 #include "partition.h"
-
-typedef enum {
-  MBR,
-  GPT
-} PartitionTable;
+#include "stream.h"
+#include "partition_table.h"
 
 struct Drive {
-  size_t size;
-  PartitionTable partition_table;
-  Partition *partitions;
-  size_t partition_count;
+  size_t length;
+  PartitionTable ptable;
+  Stream *stream;
 };
 
 typedef struct Drive Drive;
 
 // Constructors/destructors
 Drive *Drive_new(const char *devicePath) {
-  assert(0 && "todo");
+  Drive *d = malloc(sizeof(Drive));
+  assert(d && "Failed to malloc drive");
+
+  d->stream = Stream_new_fromFile(devicePath);
+  return d;
 }
 
 void Drive_free(Drive *self) {
-  assert(0 && "todo");
+  Stream_free(self->stream);
 }
 
 // Get partitions
