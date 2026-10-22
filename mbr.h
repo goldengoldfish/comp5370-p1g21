@@ -6,6 +6,10 @@
 #include <stdio.h>
 #include "partition.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MBR_SIZE 512
 #define MBR_PARTITION_COUNT 4
 
@@ -27,5 +31,9 @@ typedef struct {
  * Returns 0 on success and a nonzero value on failure.
  */
 int read_mbr(Stream *image, MBRInfo *mbr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
