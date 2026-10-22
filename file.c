@@ -11,6 +11,7 @@ typedef struct FileNode {
   size_t numChildren;
   Stream *data;
   FileNode *parent;
+  bool ownsStream;
 } FileNode;
 
 
@@ -28,13 +29,19 @@ FileNode *FileNode_new_root(FileNode **children, size_t numChildren) {
   n->numChildren = numChildren;
   n->data = NULL;
   n->parent = NULL;
+  n->ownsStream = false;
+
+  for (size_t i = 0; i < n->numChildren; i++) {
+    n->children[i]->parent = n;
+  }
   return n;
 }
 
-FileNode *FileNode_new_file(const char *name, FileNode *parent, Stream *stream) {
+FileNode *FileNode_new_file(const char *name, FileNode *parent, Stream *stream, bool ownsStream) {
   assert(name && "Name must not be NULL");
-  assert(parent && "File must have a parent");
-  assert((parent->kind == FNK_ROOT || parent->kind == FNK_DIRECTORY) && "Parent must be a root or directory node");
+  if (parent) {
+    assert((parent->kind == FNK_ROOT || parent->kind == FNK_DIRECTORY) && "Parent must be a root or directory node");
+  }
   assert(stream && "Stream must not be NULL");
 
   FileNode *n = malloc(sizeof(FileNode));
@@ -46,13 +53,15 @@ FileNode *FileNode_new_file(const char *name, FileNode *parent, Stream *stream) 
   n->numChildren = 0;
   n->data = stream;
   n->parent = parent;
+  n->ownsStream = ownsStream;
   return n;
 }
 
 FileNode *FileNode_new_directory(const char *name, FileNode *parent, FileNode **children, size_t numChildren) {
   assert(name && "Name must not be NULL");
-  assert(parent && "Directory must have a parent");
-  assert((parent->kind == FNK_ROOT || parent->kind == FNK_DIRECTORY) && "Parent must be a root or directory node");
+  if (parent) {
+    assert((parent->kind == FNK_ROOT || parent->kind == FNK_DIRECTORY) && "Parent must be a root or directory node");
+  }
   if (numChildren > 0) {
     assert(children && "children must not be NULL if numChildren > 0");
   }
@@ -66,6 +75,7 @@ FileNode *FileNode_new_directory(const char *name, FileNode *parent, FileNode **
   n->numChildren = numChildren;
   n->data = NULL;
   n->parent = parent;
+  n->ownsStream = false;
   return n;
 }
 
@@ -80,6 +90,10 @@ void FileNode_free(FileNode *self, bool deep) {
       }
     }
     free(self->children);
+  }
+
+  if (self->ownsStream) {
+    free(self->data);
   }
 
   free(self);
@@ -111,4 +125,18 @@ FileNode *FileNode_getParent(FileNode *self) {
 Stream *FileNode_open(FileNode *self) {
   assert(self->kind == FNK_FILE && "Can only open files for reading");
   return self->data;
+}
+
+void FileNode_setChildren(FileNode *self, FileNode **children, size_t numChildren) {
+  assert((self->kind == FNK_ROOT || self->kind == FNK_DIRECTORY) && "Can set the children of root or directory file nodes");
+
+  if (self->children) {
+    for (size_t i = 0; i < self->numChildren; i++) {
+      FileNode_free(self->children[i], true);
+    }
+    free(self->children);
+  }
+
+  self->children = children;
+  self->numChildren = numChildren;
 }
