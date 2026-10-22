@@ -8,7 +8,7 @@
 
 struct Drive {
   size_t length;
-  PartitionTable ptable;
+  PTable ptable;
   Stream *stream;
 };
 

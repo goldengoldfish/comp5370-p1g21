@@ -2,7 +2,6 @@
 #define PARTITION_TABLE_H
 
 #include "partition.h"
-#include "mbr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,8 +14,9 @@ typedef enum {
 } PTableKind;
 
 typedef struct {
-  PTableKind ptableKind;
-  Partition *partition_list[4];
+  PTableKind pTableKind;
+  size_t numPartitions;
+  Partition *partitionList[4];
 } PTable;
 
 // Identify and read info from partition table from stream
