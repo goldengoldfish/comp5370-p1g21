@@ -1,23 +1,23 @@
-.PHONY: all clean
+.PHONY: clean
 
 CC = gcc
 CFLAGS = -Wall -Wextra -Wpedantic -g
 LDLIBS = -lcrypto
 TARGET = da
 
-SRCS = src/main.c
+SRCS = $(wildcard *.c)
 OBJS = $(SRCS:.c=.o)
 HEADERS = $(wildcard *.h)
-
-.DEFAULT_GOAL := all
-
-all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDLIBS)
 
-src/%.o: src/%.c $(HEADERS)
+$(OBJS): $(HEADERS)
+
+%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJS) $(TARGET)
+
+.DEFAULT_GOAL := $(TARGET)
