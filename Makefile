@@ -1,7 +1,6 @@
 .PHONY: clean
-
 CC = gcc
-CFLAGS = -Wall -Wextra -Wpedantic -g
+CFLAGS = -Wall -Wextra -Wpedantic -g $(shell pkg-config --cflags libssl)
 LDLIBS = -lcrypto
 TARGET = da
 
