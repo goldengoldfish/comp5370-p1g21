@@ -13,10 +13,12 @@
 
 typedef struct {
   FileNode *rootNode;
+  size_t start, length;
 } Fat16Partition;
 
 static void Fat16Partition_free(void *partition) {
   Fat16Partition *self = partition;
+  assert(self && "Cannot free null FAT16 partition");
 
   FileNode_free(self->rootNode, true);
   free(self);
@@ -24,13 +26,30 @@ static void Fat16Partition_free(void *partition) {
 
 static FileNode *Fat16Partition_getRoot(void *partition) {
   Fat16Partition *self = partition;
+  assert(self && "Cannot get the root of a null FAT16 partition");
 
   return self->rootNode;
 }
 
+static size_t Fat16Partition_getOffset(void *partition) {
+  Fat16Partition *self = partition;
+  assert(self && "Cannot get the offset of a null FAT16 partition");
+
+  return self->start;
+}
+
+static size_t Fat16Partition_getLength(void *partition) {
+  Fat16Partition *self = partition;
+  assert(self && "Cannot get the length of a null FAT16 partition");
+
+  return self->length;
+}
+
 static PartitionImpl IMPL = {
   .free = &Fat16Partition_free,
-  .getRoot = &Fat16Partition_getRoot
+  .getRoot = &Fat16Partition_getRoot,
+  .getOffset = &Fat16Partition_getOffset,
+  .getLength = &Fat16Partition_getLength,
 };
 
 typedef struct {
@@ -240,7 +259,7 @@ void traverseDirectory(Stream *fat, Stream *root, Stream *data, FileNode *parent
 
 }
 
-Partition *Partition_new_fat16(Stream *partition) {
+Partition *Partition_new_fat16(Stream *partition, size_t start, size_t length) {
   Partition *base = malloc(sizeof(Partition));
   assert(base && "Could not malloc partition");
 
@@ -271,6 +290,8 @@ Partition *Partition_new_fat16(Stream *partition) {
   traverseDirectory(fat, root, data, NULL, &children, &numChildren, bootRecord);
 
   fat16->rootNode = FileNode_new_root(children, numChildren);
+  fat16->start = start;
+  fat16->length = length;
 
   Stream_free(root);
   Stream_free(fat);
