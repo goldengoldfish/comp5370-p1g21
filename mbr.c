@@ -12,9 +12,14 @@ static uint32_t read_le32(const unsigned char *bytes) {
          | ((uint32_t)bytes[3] << 24);
 }
 
+// check for MBR file signature without saving to MBRInfo buffer.
+int check_mbr(Stream *image) {
+    return read_mbr(image, NULL);
+}
+
 int read_mbr(Stream *image, MBRInfo *mbr) {
     assert(image && "Cannot read image");
-    assert(mbr && "mbr cannot be NULL");
+    // assert(mbr && "mbr cannot be NULL");
 
     unsigned char buffer[MBR_SIZE];
     Stream *reader = Stream_new_fromMemory(buffer, MBR_SIZE, 0);
@@ -38,8 +43,13 @@ int read_mbr(Stream *image, MBRInfo *mbr) {
 
     /* Check the MBR signature at offsets 510 and 511. */
     if (buffer[510] != 0x55 || buffer[511] != 0xAA) {
-        assert(0 && "Image does not match MBR signature");
+        // assert(0 && "Image does not match MBR signature");
         return 4;
+    }
+
+    // mbr most likely null if just checking for MBR sig
+    if (!mbr) {
+        return 0;
     }
 
     /* Each partition entry is 16 bytes, starting at offset 446. */
