@@ -19,7 +19,7 @@ typedef enum {
 typedef struct FileNode FileNode;
 
 // Constructors/destructors
-FileNode *FileNode_new_root(FileNode **children, size_t numChildren);
+FileNode *FileNode_new_root(const char *name, FileNode **children, size_t numChildren);
 FileNode *FileNode_new_file(const char *name, FileNode *parent, Stream *stream, bool ownsStream, size_t size);
 FileNode *FileNode_new_directory(const char *name, FileNode *parent, FileNode **children, size_t numChildren);
 // Use `deep` to free subtree as well
