@@ -54,6 +54,7 @@ int read_mbr(Stream *image, MBRInfo *mbr) {
     }
 
     /* Each partition entry is 16 bytes, starting at offset 446. */
+    mbr->numPartitions = MBR_PARTITION_COUNT;
     for (int i = 0; i < MBR_PARTITION_COUNT; i++) {
         const unsigned char *entry = &buffer[446 + i * 16];
 

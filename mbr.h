@@ -18,6 +18,7 @@ typedef struct {
 } MBRPartition;
 
 typedef struct {
+    size_t numPartitions;
     MBRPartition partitions[MBR_PARTITION_COUNT];
 } MBRInfo;
 
