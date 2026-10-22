@@ -1,7 +1,8 @@
 .PHONY: clean
 
 CC = gcc
-CFLAGS = -Wall -Wextra -g
+CFLAGS = -Wall -Wextra -Wpedantic -g
+LDLIBS = -lcrypto
 TARGET = da
 
 SRCS = $(wildcard *.c)
@@ -9,7 +10,7 @@ OBJS = $(SRCS:.c=.o)
 HEADERS = $(wildcard *.h)
 
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDLIBS)
 
 $(OBJS): $(HEADERS)
 
@@ -19,4 +20,4 @@ $(OBJS): $(HEADERS)
 clean:
 	rm -f $(OBJS) $(TARGET)
 
-.DEFAULT_GOAL: $(TARGET)
+.DEFAULT_GOAL := $(TARGET)

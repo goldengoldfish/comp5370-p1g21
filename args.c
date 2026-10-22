@@ -40,20 +40,25 @@ int parse_arguments(int argc, char *argv[], Arguments *args) {
     } else if (strcmp(argv[1], "carve") == 0) {
         args->action = ACTION_CARVE;
     } else {
-        // Reject actions the program does not recognize.
         fprintf(stderr, "Error: Unknown action '%s'.\n", argv[1]);
         print_usage(argv[0]);
         return 1;
     }
 
-    // Check whether the user wants to work with partitions or files.
+    // Check whether the user wants partitions or files.
     if (strcmp(argv[2], "parts") == 0) {
         args->scope = SCOPE_PARTS;
     } else if (strcmp(argv[2], "files") == 0) {
         args->scope = SCOPE_FILES;
     } else {
-        // Reject scopes the program does not recognize.
         fprintf(stderr, "Error: Unknown scope '%s'.\n", argv[2]);
+        print_usage(argv[0]);
+        return 1;
+    }
+
+    // Reject an empty image path.
+    if (argv[3][0] == '\0') {
+        fprintf(stderr, "Error: Image path cannot be empty.\n");
         print_usage(argv[0]);
         return 1;
     }
