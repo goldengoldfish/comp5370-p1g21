@@ -12,6 +12,7 @@ typedef struct FileNode {
   Stream *data;
   FileNode *parent;
   bool ownsStream;
+  size_t size;
 } FileNode;
 
 
@@ -30,6 +31,7 @@ FileNode *FileNode_new_root(FileNode **children, size_t numChildren) {
   n->data = NULL;
   n->parent = NULL;
   n->ownsStream = false;
+  n->size = 0;
 
   for (size_t i = 0; i < n->numChildren; i++) {
     n->children[i]->parent = n;
@@ -37,7 +39,7 @@ FileNode *FileNode_new_root(FileNode **children, size_t numChildren) {
   return n;
 }
 
-FileNode *FileNode_new_file(const char *name, FileNode *parent, Stream *stream, bool ownsStream) {
+FileNode *FileNode_new_file(const char *name, FileNode *parent, Stream *stream, bool ownsStream, size_t size) {
   assert(name && "Name must not be NULL");
   if (parent) {
     assert((parent->kind == FNK_ROOT || parent->kind == FNK_DIRECTORY) && "Parent must be a root or directory node");
@@ -54,6 +56,7 @@ FileNode *FileNode_new_file(const char *name, FileNode *parent, Stream *stream, 
   n->data = stream;
   n->parent = parent;
   n->ownsStream = ownsStream;
+  n->size = size;
   return n;
 }
 
@@ -76,6 +79,7 @@ FileNode *FileNode_new_directory(const char *name, FileNode *parent, FileNode **
   n->data = NULL;
   n->parent = parent;
   n->ownsStream = false;
+  n->size = 0;
   return n;
 }
 
@@ -125,6 +129,11 @@ FileNode *FileNode_getParent(FileNode *self) {
 Stream *FileNode_open(FileNode *self) {
   assert(self->kind == FNK_FILE && "Can only open files for reading");
   return self->data;
+}
+
+size_t FileNode_getSize(FileNode *self) {
+  assert(self->kind == FNK_FILE && "Can only get the size of a file");
+  return self->size;
 }
 
 void FileNode_setChildren(FileNode *self, FileNode **children, size_t numChildren) {
