@@ -52,6 +52,8 @@ static PartitionImpl IMPL = {
   .getLength = &Fat16Partition_getLength,
 };
 
+#define VOLUME_LABEL_MAX_LENGTH 11
+
 typedef struct {
   uint16_t sectorSize;
   uint8_t sectorsPerCluster;
@@ -59,6 +61,7 @@ typedef struct {
   uint8_t fatCount;
   uint16_t rootEntryCount;
   uint16_t sectorsPerFat;
+  char name[VOLUME_LABEL_MAX_LENGTH];
 } Fat16BootRecord;
 
 static Fat16BootRecord readBootRecord(Stream *data) {
@@ -69,7 +72,7 @@ static Fat16BootRecord readBootRecord(Stream *data) {
   assert((buf[0x26] == 0x28 || buf[0x26] == 0x29) && "Missing FAT16 signature");
 
   // Read BIOS parameter block
-  return (Fat16BootRecord) {
+  Fat16BootRecord bootRecord = {
     .sectorSize = READ_INT16_LE(buf, 0xB),
     .sectorsPerCluster = buf[0xD],
     .reservedSectors = READ_INT16_LE(buf, 0xE),
@@ -77,6 +80,21 @@ static Fat16BootRecord readBootRecord(Stream *data) {
     .rootEntryCount = READ_INT16_LE(buf, 0x11),
     .sectorsPerFat = READ_INT16_LE(buf, 0x16)
   };
+
+
+  // Find end of label (trim spaces)
+  int labelLength = VOLUME_LABEL_MAX_LENGTH;
+  for (int i = VOLUME_LABEL_MAX_LENGTH - 1; i >= 0; i--) {
+    if (buf[0x2B + i] != ' ') {
+      labelLength = i + 1;
+      break;
+    }
+  }
+
+  memset(bootRecord.name, '\0', VOLUME_LABEL_MAX_LENGTH);
+  memcpy(bootRecord.name, &buf[0x2B], labelLength);
+
+  return bootRecord;
 }
 
 typedef enum {
@@ -92,8 +110,16 @@ typedef struct {
   uint32_t size;
 } FatEntry;
 
+#define CHARS_PER_PART 13
+typedef struct {
+  uint8_t order;
+  uint16_t chars[CHARS_PER_PART];
+} LFNPart;
+
 static int compareLFNParts(const void *a, const void* b) {
-  return (((unsigned char*)a)[0] & 0x1F) - (((unsigned char*)b)[0] & 0x1F);
+  const LFNPart *pa = a;
+  const LFNPart *pb = b;
+  return (pa->order & 0x1F) - (pb->order & 0x1F);
 }
 
 bool parseEntry(Stream *data, FatEntry *out) {
@@ -117,47 +143,48 @@ bool parseEntry(Stream *data, FatEntry *out) {
 
   // LFN name
   if (entry[11] == 0xF) {
-    const size_t LFN_PART_SIZE = 1 + 26;
-    unsigned char* lfn = malloc(LFN_PART_SIZE); // order byte + name
-    assert(lfn && "Failed to alloc buffer for LNF parsing");
+    LFNPart* parts = malloc(sizeof(LFNPart));
+    assert(parts && "Failed to alloc buffer for LNF parsing");
 
+    // Extract all LFN entries
     size_t count = 0;
+    size_t capacity = 1;
     do {
-      // Don't realloc on the first iter
-      if (count > 0) {
-        lfn = realloc(lfn, (count + 1) * LFN_PART_SIZE);
-        assert(lfn && "Failed to realloc buffer for LNF parsing");
+      if (count >= capacity) {
+        capacity *= 2;
+        parts = realloc(parts, capacity * sizeof(LFNPart));
+        assert(parts && "Failed to realloc buffer for LNF parsing");
       }
-
-      size_t start = count * LFN_PART_SIZE;
-
-      lfn[start] = entry[0];
-      memcpy(lfn + start + 1, entry + 1, 10);
-      memcpy(lfn + start + 11, entry + 14, 12);
-      memcpy(lfn + start + 23, entry + 28, 4);
+      
+      parts[count].order = entry[0];
+      memcpy(&parts[count].chars[0], &entry[1], 10);
+      memcpy(&parts[count].chars[5], &entry[14], 12);
+      memcpy(&parts[count].chars[11], &entry[28], 4);
 
       assert(Stream_read(data, entry, 0, 32) == 32 && "Failed to read FAT entry");
       count++;
     } while (entry[11] == 0xF);
 
-    qsort(lfn, count, LFN_PART_SIZE, &compareLFNParts);
+    // Sort by order byte
+    qsort(parts, count, sizeof(LFNPart), &compareLFNParts);
 
-    const size_t CHARS_PER_PART = (LFN_PART_SIZE - 1) / 2;
     name = calloc((count * CHARS_PER_PART) + 1, 1);
-    size_t i = 0, p = 1;
-    unsigned char c;
-    while ((c = lfn[p])) {
-      assert(!(c & 0x80) && "UTF-16 LFN not supported");
-      name[i++] = c;
-      p += 2;
 
-      // Skip over order byte when possible
-      if (i % CHARS_PER_PART == 0) {
-        p++;
+    // Reconstruct full string
+    size_t p = 0;
+    for (size_t i = 0; i < count; i++) {
+      for (size_t j = 0; j < CHARS_PER_PART; j++) {
+        char c = parts[i].chars[j];
+        assert(!(c & 0x80) && "UTF-16 in LFN not supported");
+        if (c == 0) {
+          i = count;
+          break;
+        }
+        name[p++] = c;
       }
     }
 
-    free(lfn);
+    free(parts);
   }
 
   assert(entry[11] != 0xF && "We should be past any LFN blocks!");
@@ -281,17 +308,14 @@ Partition *Partition_new_fat16(Stream *partition, size_t start, size_t length) {
   int firstDataSector = firstRootSector + rootSectors;
 
   Stream *fat = Stream_new_fromStream(partition, startOffset + (bootRecord.sectorSize * bootRecord.reservedSectors), bootRecord.sectorSize * bootRecord.sectorsPerFat);
-
   Stream *root = Stream_new_fromStream(partition, startOffset + (bootRecord.sectorSize * firstRootSector), bootRecord.sectorSize * rootSectors);
-
-  // `SIZE_MAX` is technically wrong but it should not be an issue since should never attempt to read off the partition
-  Stream *data = Stream_new_fromStream(partition, startOffset + (bootRecord.sectorSize * firstDataSector), SIZE_MAX);
+  Stream *data = Stream_new_fromStream(partition, startOffset + (bootRecord.sectorSize * firstDataSector), length);
 
   FileNode **children;
   size_t numChildren;
   traverseDirectory(fat, root, data, NULL, &children, &numChildren, bootRecord);
 
-  fat16->rootNode = FileNode_new_root(children, numChildren);
+  fat16->rootNode = FileNode_new_root(bootRecord.name[0] ? bootRecord.name : NULL, children, numChildren);
   fat16->start = start;
   fat16->length = length;
 
