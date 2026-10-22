@@ -203,7 +203,7 @@ Stream *createMultiStreamFromClusters(Stream *fat, Stream *partition, uint32_t c
 }
 
 void traverseDirectory(Stream *fat, Stream *root, Stream *data, FileNode *parent, FileNode ***children, size_t *numChildren, Fat16BootRecord bootRecord) {
-  *children = malloc(0);
+  *children = NULL;
   *numChildren = 0;
 
   FatEntry e;
@@ -224,7 +224,7 @@ void traverseDirectory(Stream *fat, Stream *root, Stream *data, FileNode *parent
 
         (*numChildren)++;
         *children = realloc(*children, sizeof(FileNode*) * (*numChildren));
-        FileNode *n = FileNode_new_directory(e.name, parent, malloc(0), 0);
+        FileNode *n = FileNode_new_directory(e.name, parent, NULL, 0);
 
         Stream *dirRoot = createMultiStreamFromClusters(fat, data, e.cluster, bootRecord);
         traverseDirectory(fat, dirRoot, data, n, &dirChildren, &dirChildCount, bootRecord);
