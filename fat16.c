@@ -89,6 +89,7 @@ typedef struct {
   FatEntryKind kind;
   const char *name;
   uint32_t cluster;
+  uint32_t size;
 } FatEntry;
 
 static int compareLFNParts(const void *a, const void* b) {
@@ -193,6 +194,7 @@ bool parseEntry(Stream *data, FatEntry *out) {
   }
 
   out->cluster = READ_INT16_LE(entry, 26) | (READ_INT16_LE(entry, 20) << 16);
+  out->size = READ_INT32_LE(entry, 28);
   return true;
 }
 
@@ -231,7 +233,7 @@ void traverseDirectory(Stream *fat, Stream *root, Stream *data, FileNode *parent
       case FEK_FILE:
         (*numChildren)++;
         *children = realloc(*children, sizeof(FileNode*) * (*numChildren));
-        (*children)[(*numChildren) - 1] = FileNode_new_file(e.name, parent, createMultiStreamFromClusters(fat, data, e.cluster, bootRecord), true);
+        (*children)[(*numChildren) - 1] = FileNode_new_file(e.name, parent, createMultiStreamFromClusters(fat, data, e.cluster, bootRecord), true, e.size);
         break;
       case FEK_DIRECTORY:
         if (strcmp(".", e.name) == 0 || strcmp("..", e.name) == 0) {
