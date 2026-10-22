@@ -25,7 +25,7 @@ size_t Partition_getOffset(Partition *self);
 size_t Partition_getLength(Partition *self);
 
 // Constructors/destructors
-Partition *Partition_new_fat16(Stream *data);
+Partition *Partition_new_fat16(Stream *data, size_t start, size_t length);
 // etc.
 void Partition_free(Partition *self);
 
