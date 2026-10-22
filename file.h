@@ -20,7 +20,7 @@ typedef struct FileNode FileNode;
 
 // Constructors/destructors
 FileNode *FileNode_new_root(FileNode **children, size_t numChildren);
-FileNode *FileNode_new_file(const char *name, FileNode *parent, Stream *stream);
+FileNode *FileNode_new_file(const char *name, FileNode *parent, Stream *stream, bool ownsStream);
 FileNode *FileNode_new_directory(const char *name, FileNode *parent, FileNode **children, size_t numChildren);
 // Use `deep` to free subtree as well
 // This will zero each child's reference to self node as well (i.e., getParent() will return NULL)
@@ -37,6 +37,9 @@ FileNode *FileNode_getParent(FileNode *self);
 
 // Read files
 Stream *FileNode_open(FileNode *self);
+
+// Set directory contents
+void FileNode_setChildren(FileNode *self, FileNode **children, size_t numChildren);
 
 #ifdef __cplusplus
 }
