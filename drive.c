@@ -6,33 +6,39 @@
 #include "stream.h"
 #include "partition_table.h"
 
-struct Drive {
+typedef struct Drive {
   size_t length;
   PTable ptable;
   Stream *stream;
-};
-
-typedef struct Drive Drive;
+} Drive;
 
 // Constructors/destructors
 Drive *Drive_new(const char *devicePath) {
-  Drive *d = malloc(sizeof(Drive));
-  assert(d && "Failed to malloc drive");
+  Drive *self = malloc(sizeof(Drive));
+  assert(self && "Failed to malloc drive");
 
-  d->stream = Stream_new_fromFile(devicePath);
-  return d;
+  self->stream = Stream_new_fromFile(devicePath);
+  self->ptable = PTable_getTable(self->stream);
+  return self;
 }
 
 void Drive_free(Drive *self) {
+  assert(self && "Cannot free a null drive");
+
   Stream_free(self->stream);
 }
 
 // Get partitions
 Partition *Drive_getPartition(Drive *self, size_t index) {
-  assert(0 && "todo");
+  assert(self && "Cannot get a partition from a null drive");
+
+  assert(index < self->ptable.numPartitions && "Partition index out of bounds");
+
+  return self->ptable.partitionList[index];
 }
 
 size_t Drive_getPartitionCount(Drive *self) {
-  assert(0 && "todo");
+  assert(self && "Cannot get the partition count of a null drive");
+  return self->ptable.numPartitions;
 }
 

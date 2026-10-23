@@ -8,9 +8,9 @@ extern "C" {
 #endif
 
 typedef enum {
-  UNKNOWN = 0,
-  MBR,
-  GPT
+  PTK_UNKNOWN = 0,
+  PTK_MBR,
+  PTK_GPT
 } PTableKind;
 
 typedef struct {
