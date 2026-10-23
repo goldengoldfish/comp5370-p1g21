@@ -226,10 +226,15 @@ bool parseEntry(Stream *data, FatEntry *out) {
   return true;
 }
 
-Stream *createMultiStreamFromClusters(Stream *fat, Stream *partition, uint32_t cluster, Fat16BootRecord bootRecord) {
-  Stream **sectors = NULL;
-  size_t *lengths = NULL;
+static size_t min(size_t a, size_t b) {
+  return a < b ? a : b;
+}
+
+Stream *createMultiStreamFromClusters(Stream *fat, Stream *partition, uint32_t cluster, Fat16BootRecord bootRecord, size_t maxLength) {
+  Stream **sectors = malloc(sizeof(Stream*));
+  size_t *lengths = malloc(sizeof(size_t));
   size_t sectorCount = 0;
+  size_t capacity = 1;
 
   unsigned char buf[2];
   while (cluster < 0xFFF8) {
@@ -237,11 +242,16 @@ Stream *createMultiStreamFromClusters(Stream *fat, Stream *partition, uint32_t c
 
     size_t sectorOffset = (cluster - 2) * bootRecord.sectorsPerCluster;
 
-    sectors = realloc(sectors, sizeof(Stream*) * sectorCount);
+    if (sectorCount >= capacity) {
+      capacity *= 2;
+      sectors = realloc(sectors, sizeof(Stream*) * capacity);
+      lengths = realloc(lengths, sizeof(size_t) * capacity);
+    }
+
     sectors[sectorCount - 1] = Stream_new_fromStream(partition, sectorOffset * bootRecord.sectorSize, bootRecord.sectorSize * bootRecord.sectorsPerCluster);
 
-    lengths = realloc(lengths, sizeof(size_t) * sectorCount);
-    lengths[sectorCount - 1] = bootRecord.sectorSize;
+    lengths[sectorCount - 1] = min(bootRecord.sectorSize, maxLength);
+    maxLength -= lengths[sectorCount - 1];
 
     Stream_seek(fat, cluster * 2);
     Stream_read(fat, buf, 0, 2);
@@ -261,7 +271,7 @@ void traverseDirectory(Stream *fat, Stream *root, Stream *data, FileNode *parent
       case FEK_FILE:
         (*numChildren)++;
         *children = realloc(*children, sizeof(FileNode*) * (*numChildren));
-        (*children)[(*numChildren) - 1] = FileNode_new_file(e.name, parent, createMultiStreamFromClusters(fat, data, e.cluster, bootRecord), true, e.size);
+        (*children)[(*numChildren) - 1] = FileNode_new_file(e.name, parent, createMultiStreamFromClusters(fat, data, e.cluster, bootRecord, e.size), true, e.size);
         break;
       case FEK_DIRECTORY:
         if (strcmp(".", e.name) == 0 || strcmp("..", e.name) == 0) {
@@ -275,7 +285,7 @@ void traverseDirectory(Stream *fat, Stream *root, Stream *data, FileNode *parent
         *children = realloc(*children, sizeof(FileNode*) * (*numChildren));
         FileNode *n = FileNode_new_directory(e.name, parent, NULL, 0);
 
-        Stream *dirRoot = createMultiStreamFromClusters(fat, data, e.cluster, bootRecord);
+        Stream *dirRoot = createMultiStreamFromClusters(fat, data, e.cluster, bootRecord, SIZE_MAX);
         traverseDirectory(fat, dirRoot, data, n, &dirChildren, &dirChildCount, bootRecord);
 
         FileNode_setChildren(n, dirChildren, dirChildCount);
