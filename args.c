@@ -5,7 +5,7 @@
 
 // Shows the user how to run the program.
 void print_usage(const char *program_name) {
-    printf("DiskSleuth - Disk Forensics Tool\n\n");
+    printf("%s - Disk analyzer\n\n", program_name);
     printf("Usage:\n");
     printf("  %s list parts <disk_image>\n", program_name);
     printf("  %s carve parts <disk_image>\n", program_name);
