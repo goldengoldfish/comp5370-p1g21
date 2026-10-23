@@ -18,17 +18,6 @@ int read_mbr(Stream *image, MBRInfo *mbr) {
 
     unsigned char buffer[MBR_SIZE];
 
-    // covered by asserts at beginning
-    // if (image == NULL || mbr == NULL) {
-    //     return 1;
-    // }
-
-    // covered by assert in Stream_new_fromMemory();
-    // /* Start reading at the beginning of the disk image. */
-    // if (fseek(image, 0, SEEK_SET) != 0) {
-    //     return 2;
-    // }
-
     /* An MBR requires at least 512 bytes. */
     if (Stream_read(image, buffer, 0, MBR_SIZE) != MBR_SIZE) {
         assert(0 && "Cannot read MBR");
