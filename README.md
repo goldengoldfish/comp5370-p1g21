@@ -2,110 +2,53 @@
 **COMP 5370/6370 Computer and Network Security**
 *Group 21*
 Brandon Buckley, Jarod Jernigan, Izayah Tubigon
+https://github.com/goldengoldfish/comp5370-p1g21
 ## Overview
-`da` is a commandline-based tool for quickly scanning a disk image for forensic purposes. Features include determining the filesystem of the image, getting partition info, carving files from those partitions, and creating a hashsum-checked report of all info found. 
-Although the functionality of the current release is limited, the project was built with extensibility in mind.
+`da` is a commandline-based tool for quickly scanning a disk image for forensic purposes. It is able to parse images of disks with an MBR and FAT16 partitions. Although the functionality of the current release is limited, the project was built with extensibility in mind.
 
 ## Usage
-
-> [!TODO] TODO
-> Update to reflect current usage
-
-
+da finds partitions on the image and outputs information from them, as well as carving the partitions into the output directory.
 ```
-da [action] [scope]
-
-[action]
-	list: scan image/partition, but don't write anything to files
-	carve: save partitions on image/files on partition to files
-[scope]
-	parts: operate on partitions of a full disk image
-	files: operate of files on a partition
+da img.dd output/
 ```
-
-### Examples
-To list the partitions detected on an image:
+### Sample Output
 ```
-da list parts img.dd
+=== Partitions ===
+Partition 0:
+        Partition Type: FAT16
+        Start Offset: 1048576 (2048 secotrs)
+        Length: 104857600 (204800 sectors)
+Partition 1:
+        Partition Type: FAT16
+        Start Offset: 105906176 (206848 secotrs)
+        Length: 209715200 (409600 sectors)
+Partition 2:
+        Partition Type: FAT16
+        Start Offset: 315621376 (616448 secotrs)
+        Length: 524288000 (1024000 sectors)
+Partition 3:
+        Partition Type: FAT16
+[]()        Start Offset: 839909376 (1640448 secotrs)
+        Length: 1073741824 (2097152 sectors)
+Carved 4 partitions
+== Files on 0 ===
+100M/
+        System Volume Information/
+                WPSettings.dat [692772596aa152d9909678b98fddfe72d8da87be8f21cfa08c11de696afeaa93]
+                IndexerVolumeGuid [bd7b381c58de969b36b20a97025672389f9308c2288c424423034424d705f942]
+        Groot.jpg [63e9b30b1d4d3ffe495ebfd91e2a9877dfa7dda10526abe5ca02b86996b17682]
+        BYoda.jpeg [de4c83846dd2e183aa506d28eae188b15a217e5fa13b5a8f3b13a08fe8e2d627]
+        Babu.jpg [92f38bc88c1377bf2dcc4dea25da1b79a2dd702d9830d0aac9aa72134fabb8b6]
+== Files on 1 ===
+200M/
+        System Volume Information/
+                WPSettings.dat [68ca05112c7df200eb378a63e90e67d3815a25313db4ac38e01f1ce6f97465df]
+                IndexerVolumeGuid [f385d833863d304d866f00125023abc703d20e7295d4ac98fcfe0c13416b3fd1]
+== Files on 2 ===
+...
 ```
-
-Carve detected partitions from `img.dd` and save them to the provided output directory, with default names `img.dd<partition_number>`.
-```
-da carve parts img.dd ./img_partitions/
-```
-
-Scan a partition image for files. 
-```
-da list files img.dd1
-```
-
-Output files from a partition image into the provided output directory.
-```
-da carve files img.dd1 ./img_partitions/
-```
-
-## Implementation
-### Argument Handling
-
-#### Structures & Enums
-- **Action** (enum): Defines the operation to be performed (e.g., to display info, to extract data).
-- **Scope** (enum): Defines the context of the operation (e.g., for partitions, for file contents).
-- **Arguments** (struct): Container holding the parsed command's state, including the , , and .
-
-#### Functions
-- `: Reads the command line arguments, validates them, and populates the structure. Returns 0 on success.- `: Prints the tool's usage guide and available commands to standard output.
-
----
-
-### Media Access and Drive Handling
-
-Provides the primary public interface for interacting with physical or filesystem devices (Drives).
-
-#### Structures
-- ****: The main structure representing the physical medium being analyzed.
-
-#### Functions
-- `: Constructor. Initializes a object from a given device path (e.g., ).- `: Destructor. Cleans up resources associated with the object.- `: Utility function to determine the number of partitions present on the drive.- `: Retrieves a specific object from the drive using its index.
-
----
-
-### Data Streaming
-
-Abstracts the input source, allowing the tool to treat files, memory buffers, or nested structures uniformly.
-
-#### Structures
-- ****: The base data stream object used for reading sequential data.
-
-#### Functions
-- **Constructors (Initialization)**:
- - : Creates a stream reading from a specified file path.
- - : Used for cascading streams (e.g., capturing a file system within a raw disk image). This overload handles nested stream contexts.
- - : Creates a stream from an existing memory buffer, allowing control.
- - : Used when processing multiple input streams simultaneously.- : Destructor. Frees the object and any resources it owns.- **Core Operations**:
- - : The primary interface for reading data from the stream into a target buffer.
- - : Allows seeking to a specific offset within the stream.
- - : Reports the current read offset within the stream.
-
----
-
-### Partition Analysis
-
-Handles structures and file systems residing within a partition.
-
-#### Structures & Types
-- ****: Represents a specific partition found on a drive.- **** (enum): Categorizes the type of partition found (e.g., ).- ****: Represents a file or directory within the file system structure.
-
-#### Functions
-- **Constructors/Destructors**:
- - Constructor to analyze and establish a FAT16 partition object from a stream segment.
- - Destructor for the object.- **Accessors**:
- - Determines the file system type of the partition.
- - Retrieves the starting byte offset of the partition on the physical medium.
- - Retrieves the total size (in bytes) of the partition.
 
 ## Results
-- [ ] what was successfully implemented
-- [ ] what was not implemented
-- [ ] relation to class's concepts
+Although we were able to accomplish a lot of what we set out to do, much was left unfinished. For one, limited filesystem support severely limits the tools use in realistic environments. We had issues tying the arguments to the commands many functions, so we had to improvise and use all dump all functionality at once.
 
-Although we were able to accomplish most of what we set out to 
+The feature most related to the coursework is how the program outputs the file hashes of each of the found files. We had plans to implement a feature to sign the output of the command with a private key, but time ran short on testing.
