@@ -47,7 +47,7 @@ static int MultiStream_read(void *stream, unsigned char *buffer, size_t offset, 
   int totalRead = 0;
   while (index < self->numOthers) {
     // Read as much as we can from this stream
-    size_t toRead = min(length, self->lengths[index] - localReadOffset);
+    size_t toRead = min(length - totalRead, self->lengths[index] - localReadOffset);
     int read = Stream_read(self->others[index], buffer, offset + totalRead, toRead);
 
     totalRead += read;
