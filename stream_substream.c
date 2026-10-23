@@ -2,7 +2,6 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "stream.h"
 
 typedef struct {
   Stream *parent;

@@ -3,6 +3,7 @@
 #include "partition.h"
 #include <assert.h>
 #include <stdio.h>
+#include "args.h"
 
 static void dumpNode(FileNode *node, size_t indent) {
   for (size_t i = 0; i < indent; i++) {

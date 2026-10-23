@@ -1,12 +1,13 @@
 #include "file.h"
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 static const char *ROOT_NAME = "<root>";
 
 typedef struct FileNode {
   FileNodeKind kind;
-  const char *name;
+  char *name;
   FileNode **children;
   size_t numChildren;
   Stream *data;
@@ -15,8 +16,7 @@ typedef struct FileNode {
   size_t size;
 } FileNode;
 
-
-FileNode *FileNode_new_root(FileNode **children, size_t numChildren) {
+FileNode *FileNode_new_root(const char *name, FileNode **children, size_t numChildren) {
   if (numChildren > 0) {
     assert(children && "children must not be NULL if numChildren > 0");
   }
@@ -25,13 +25,18 @@ FileNode *FileNode_new_root(FileNode **children, size_t numChildren) {
   assert(n && "Failed to malloc file node");
 
   n->kind = FNK_ROOT;
-  n->name = ROOT_NAME;
   n->children = children;
   n->numChildren = numChildren;
   n->data = NULL;
   n->parent = NULL;
   n->ownsStream = false;
   n->size = 0;
+
+  name = name ? name : ROOT_NAME;
+  size_t nameLen = strlen(name);
+  n->name = malloc(nameLen + 1);
+  n->name[nameLen] = 0;
+  memcpy(n->name, name, nameLen);
 
   for (size_t i = 0; i < n->numChildren; i++) {
     n->children[i]->parent = n;
@@ -50,13 +55,17 @@ FileNode *FileNode_new_file(const char *name, FileNode *parent, Stream *stream, 
   assert(n && "Failed to malloc file node");
 
   n->kind = FNK_FILE;
-  n->name = name;
   n->children = NULL;
   n->numChildren = 0;
   n->data = stream;
   n->parent = parent;
   n->ownsStream = ownsStream;
   n->size = size;
+
+  size_t nameLen = strlen(name);
+  n->name = malloc(nameLen + 1);
+  n->name[nameLen] = 0;
+  memcpy(n->name, name, nameLen);
   return n;
 }
 
@@ -73,13 +82,17 @@ FileNode *FileNode_new_directory(const char *name, FileNode *parent, FileNode **
   assert(n && "Failed to malloc file node");
 
   n->kind = FNK_DIRECTORY;
-  n->name = name;
   n->children = children;
   n->numChildren = numChildren;
   n->data = NULL;
   n->parent = parent;
   n->ownsStream = false;
   n->size = 0;
+
+  size_t nameLen = strlen(name);
+  n->name = malloc(nameLen + 1);
+  n->name[nameLen] = 0;
+  memcpy(n->name, name, nameLen);
   return n;
 }
 
@@ -100,6 +113,7 @@ void FileNode_free(FileNode *self, bool deep) {
     free(self->data);
   }
 
+  free(self->name);
   free(self);
 }
 
