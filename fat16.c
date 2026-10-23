@@ -14,6 +14,7 @@
 typedef struct {
   FileNode *rootNode;
   size_t start, length;
+  Stream *dataStream; // Is the parent to all of the FileNodes' streams
 } Fat16Partition;
 
 static void Fat16Partition_free(void *partition) {
@@ -21,6 +22,7 @@ static void Fat16Partition_free(void *partition) {
   assert(self && "Cannot free null FAT16 partition");
 
   FileNode_free(self->rootNode, true);
+  Stream_free(self->dataStream);
   free(self);
 }
 
@@ -334,6 +336,7 @@ Partition *Partition_new_fat16(Stream *partition, size_t start, size_t length) {
 
   Stream_free(root);
   Stream_free(fat);
+  fat16->dataStream = data; // Will be freed with partition
 
   return base;
 }
