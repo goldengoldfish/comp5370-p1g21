@@ -223,7 +223,7 @@ bool parseEntry(Stream *data, FatEntry *out) {
     out->kind = FEK_FILE;
   }
 
-  out->cluster = READ_INT16_LE(entry, 26) | (READ_INT16_LE(entry, 20) << 16);
+  out->cluster = READ_INT16_LE(entry, 26);
   out->size = READ_INT32_LE(entry, 28);
   return true;
 }
@@ -239,7 +239,7 @@ Stream *createMultiStreamFromClusters(Stream *fat, Stream *partition, uint32_t c
   size_t capacity = 1;
 
   unsigned char buf[2];
-  while (cluster < 0xFFF8) {
+  while (cluster < 0xFFF8 && maxLength > 0) {
     sectorCount++;
 
     size_t sectorOffset = (cluster - 2) * bootRecord.sectorsPerCluster;

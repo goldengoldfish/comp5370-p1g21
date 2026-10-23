@@ -16,8 +16,10 @@ void Drive_free(Drive *self);
 
 // Get partitions
 Partition *Drive_getPartition(Drive *self, size_t index);
-
 size_t Drive_getPartitionCount(Drive *self);
+
+// Get full disk image stream
+Stream *Drive_getImage(Drive *self);
 
 #ifdef __cplusplus
 }

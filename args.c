@@ -14,7 +14,7 @@ void print_usage(const char *program_name) {
 }
 
 // Reads the command and checks whether it is valid.
-int parse_arguments(int argc, char *argv[], Arguments *args) {
+int parse_arguments(int argc, char **argv, Arguments *args) {
 
     // Make sure the result structure exists.
     if (args == NULL) {

@@ -44,3 +44,7 @@ size_t Drive_getPartitionCount(Drive *self) {
   return self->ptable.numPartitions;
 }
 
+Stream *Drive_getImage(Drive *self) {
+  assert(self && "Cannot get the image of a null drive");
+  return self->stream;
+}

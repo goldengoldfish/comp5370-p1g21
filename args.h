@@ -25,7 +25,7 @@ typedef struct {
 
 // Reads and checks the command-line arguments.
 // Returns 0 if valid, or a nonzero value if invalid.
-int parse_arguments(int argc, char *argv[], Arguments *args);
+int parse_arguments(int argc, char **argv, Arguments *args);
 
 // Displays the available commands.
 void print_usage(const char *program_name);
