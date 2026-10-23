@@ -52,6 +52,7 @@ static PartitionImpl IMPL = {
   .getLength = &Fat16Partition_getLength,
 };
 
+
 #define VOLUME_LABEL_MAX_LENGTH 11
 
 typedef struct {
