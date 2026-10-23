@@ -1,27 +1,35 @@
 #include "drive.h"
 #include "file.h"
+#include "hash.h"
 #include "partition.h"
+#include "stream.h"
 #include <assert.h>
 #include <stdio.h>
-#include "args.h"
 
 static void dumpNode(FileNode *node, size_t indent) {
   for (size_t i = 0; i < indent; i++) {
     putc('\t', stdout);
   }
+  char *hash = malloc(65);
   switch (FileNode_getKind(node)) {
-  case FNK_FILE:
-    printf("%s\n", FileNode_getName(node));
-    break;
-  case FNK_ROOT:
-  case FNK_DIRECTORY:
-    printf("%s/\n", FileNode_getName(node));
-    for (size_t i = 0; i < FileNode_getChildCount(node); i++) {
-      dumpNode(FileNode_getChild(node, i), indent + 1);
+    case FNK_FILE: {
+      // No need to free stream since it's owned by the FileNode
+      Stream *s = FileNode_open(node);
+      Stream_seek(s, 0);
+      hash_file_sha256(s, hash);
+      printf("%s [%s]\n", FileNode_getName(node), hash);
+      break;
     }
-  default:
-    break;
+    case FNK_ROOT:
+    case FNK_DIRECTORY:
+      printf("%s/\n", FileNode_getName(node));
+      for (size_t i = 0; i < FileNode_getChildCount(node); i++) {
+        dumpNode(FileNode_getChild(node, i), indent + 1);
+      }
+    default:
+      break;
   }
+  free(hash);
 }
 
 int main(int argc, char **argv) {

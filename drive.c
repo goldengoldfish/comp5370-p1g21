@@ -26,6 +26,8 @@ void Drive_free(Drive *self) {
   assert(self && "Cannot free a null drive");
 
   Stream_free(self->stream);
+  PTable_free(&self->ptable);
+  free(self);
 }
 
 // Get partitions

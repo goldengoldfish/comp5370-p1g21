@@ -110,7 +110,7 @@ void FileNode_free(FileNode *self, bool deep) {
   }
 
   if (self->ownsStream) {
-    free(self->data);
+    Stream_free(self->data);
   }
 
   free(self->name);

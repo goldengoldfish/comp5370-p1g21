@@ -1,4 +1,5 @@
 #include "mbr.h"
+#include "partition.h"
 #include "partition_table.h"
 #include "stream.h"
 #include <assert.h>
@@ -22,4 +23,10 @@ PTable PTable_getTable(Stream *stream) {
   }
 
   return result;
+}
+
+void PTable_free(PTable *self) {
+  for (size_t i = 0; i < self->numPartitions; i++) {
+    Partition_free(self->partitionList[i]);
+  }
 }

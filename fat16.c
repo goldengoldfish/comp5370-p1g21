@@ -193,7 +193,7 @@ bool parseEntry(Stream *data, FatEntry *out) {
 
   // Non-LFN name
   if (!name) {
-    name = calloc(12, 1); // 8 name + . + 3 extension
+    name = calloc(13, 1); // 8 name + . + 3 extension + \0
     int nameEnd = 7;
     while (nameEnd >= 0 && entry[nameEnd] == ' ') {
       nameEnd--;
@@ -275,7 +275,7 @@ void traverseDirectory(Stream *fat, Stream *root, Stream *data, FileNode *parent
         break;
       case FEK_DIRECTORY:
         if (strcmp(".", e.name) == 0 || strcmp("..", e.name) == 0) {
-          continue;
+          goto L_continue;
         }
 
         FileNode **dirChildren;
@@ -287,16 +287,18 @@ void traverseDirectory(Stream *fat, Stream *root, Stream *data, FileNode *parent
 
         Stream *dirRoot = createMultiStreamFromClusters(fat, data, e.cluster, bootRecord, SIZE_MAX);
         traverseDirectory(fat, dirRoot, data, n, &dirChildren, &dirChildCount, bootRecord);
+        Stream_free(dirRoot);
 
         FileNode_setChildren(n, dirChildren, dirChildCount);
 
         (*children)[(*numChildren) - 1] = n;
         break;
       default:
-        continue;
+        goto L_continue;
     }
+L_continue:
+    free((void*)e.name);
   }
-
 }
 
 Partition *Partition_new_fat16(Stream *partition, size_t start, size_t length) {

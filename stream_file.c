@@ -27,6 +27,8 @@ static int FileStream_read(void *stream, unsigned char *buffer, size_t offset, s
     return 0;
   }
 
+  assert(!fseek(self->handle, self->offset, SEEK_SET) && "Failed to seek file stream");
+
   int read = fread(buffer + offset, 1, length, self->handle);
   assert(!ferror(self->handle) && "Error when reading file stream");
 
@@ -72,10 +74,13 @@ Stream *Stream_new_fromFile(const char *path) {
   assert(fs && "Failed to malloc file stream");
 
   fs->handle = fopen(path, "rb");
+  fs->offset = 0;
+
   assert(fs->handle && "Failed to open file stream");
 
   base->stream = fs;
   base->impl = &IMPL;
+
 
   return base;
 }

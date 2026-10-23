@@ -46,6 +46,8 @@ static int MultiStream_read(void *stream, unsigned char *buffer, size_t offset, 
 
   int totalRead = 0;
   while (index < self->numOthers) {
+    Stream_seek(self->others[index], localReadOffset);
+
     // Read as much as we can from this stream
     size_t toRead = min(length - totalRead, self->lengths[index] - localReadOffset);
     int read = Stream_read(self->others[index], buffer, offset + totalRead, toRead);
@@ -70,19 +72,7 @@ static int MultiStream_read(void *stream, unsigned char *buffer, size_t offset, 
 void MultiStream_seek(void *stream, size_t offset) {
   MultiStream *self = stream;
   assert(self && "Cannot seek a null multi stream");
-
-  bool foundPartiallyReadStream = false;
-  for (size_t i = 0; i < self->numOthers; i++) {
-    if (offset > self->lengths[i]) { // We have read past this stream; seek to EOF
-      Stream_seek(self->others[i], self->lengths[i]);
-      offset -= self->lengths[i];
-    } else if (!foundPartiallyReadStream) { // This is the first stream that we haven't fully read; seek to offset within
-      Stream_seek(self->others[i], offset);
-      foundPartiallyReadStream = true;
-    } else { // We have not gotten to this stream yet; seek to start
-      Stream_seek(self->others[i], 0);
-    }
-  }
+  self->readOffset = offset;
 }
 
 size_t MultiStream_getOffset(void *stream) {
@@ -123,6 +113,8 @@ Stream *Stream_new_fromMultiple(Stream **others, size_t *lengths, size_t numOthe
   m->numOthers = numOthers;
   m->ownsOthers = ownsOthers;
   m->lengths = lengths;
+  m->readOffset = 0;
+
   self->impl = &IMPL;
   self->stream = m;
 
